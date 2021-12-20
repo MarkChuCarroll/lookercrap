@@ -87,16 +87,19 @@ view: reservation_utilization_week {
 
   dimension: average_weekly_slot_usage   {
     type: number
+    value_format_name: decimal_2
     sql: ${TABLE}.average_weekly_slot_usage ;;
   }
 
   dimension: average_reservation_capacity   {
     type: number
+    value_format_name: decimal_2
     sql: ${TABLE}.average_reservation_capacity ;;
   }
 
-  dimension: reservation_utilization   {
-    type: number
+  measure: reservation_utilization   {
+    type: sum
+    value_format_name: percent_2
     sql: ${TABLE}.reservation_utilization ;;
   }
 
