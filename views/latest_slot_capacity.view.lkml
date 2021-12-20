@@ -11,7 +11,7 @@ view: latest_slot_capacity {
         SELECT AS STRUCT reservation_name, MAX(change_timestamp)
         FROM
           `region-{% parameter region %}.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT`
-        GROUP BY reservation_name
+        GROUP BY reservation_name)
        ;;
    }
 
