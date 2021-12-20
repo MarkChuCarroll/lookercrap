@@ -3,14 +3,14 @@ view: latest_slot_capacity {
      sql: SELECT
       rcp.reservation_name, rcp.slot_capacity
     FROM
-      `region-{% parameter region %}.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT` AS rcp
+      `bq-admin-spotify.region-{% parameter region %}.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT` AS rcp
     WHERE
       -- This subquery returns the latest slot capacity for each reservation
       -- by extracting the reservation with the maximum timestamp
       (rcp.reservation_name, rcp.change_timestamp) IN (
         SELECT AS STRUCT reservation_name, MAX(change_timestamp)
         FROM
-          `region-{% parameter region %}.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT`
+          `bq-admin-spotify.region-{% parameter region %}.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT`
         GROUP BY reservation_name)
        ;;
    }
