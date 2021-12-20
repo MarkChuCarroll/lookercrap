@@ -40,7 +40,6 @@ view: hourly_utilization {
 
   dimension: reservation_id   {
     type: string
-    suggestions: ["test1", "..."]
     sql: ${TABLE}.reservation_id ;;
   }
 
