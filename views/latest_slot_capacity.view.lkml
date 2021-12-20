@@ -3,7 +3,7 @@ view: latest_slot_capacity {
      sql: SELECT
       rcp.reservation_name, rcp.slot_capacity
     FROM
-      `region-{% parameter region %}`.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT` AS rcp
+      `region-{% parameter region %}.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT` AS rcp
     WHERE
       -- This subquery returns the latest slot capacity for each reservation
       -- by extracting the reservation with the maximum timestamp
