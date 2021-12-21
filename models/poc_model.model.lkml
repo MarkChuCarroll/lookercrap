@@ -10,3 +10,11 @@ explore: reservation_utilization_week {}
 #explore: commitment_changes {}
 #explore: current_commitments {}
 explore: job_execution {}
+explore: jobs_by_organization {
+  # Repeated nested object
+  join: jobs_by_organization_job_stages {
+    sql: LEFT JOIN UNNEST(jobs_by_organization.job_stages) as jobs_by_organization_job_stages ;;
+    relationship: one_to_many
+  }
+}
+explore: job_error{}
