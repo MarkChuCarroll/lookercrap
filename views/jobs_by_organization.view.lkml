@@ -21,15 +21,36 @@ view: jobs_by_organization {
     sql: ${TABLE}.reservation_id ;;
   }
 
-  dimension: creation_time   {
-    type: string
-    sql: ${TABLE}.creation_time ;;
-  }
+  #dimension: creation_time   {
+  #  type: string
+  #  sql: ${TABLE}.creation_time ;;
+  #}
 
-  dimension: creation_date   {
-    type: date
-    datatype: date
-    sql: EXTRACT(DATE FROM ${creation_time}) ;;
+  #dimension: creation_date   {
+  #  type: date
+  #  datatype: date
+  #  sql: EXTRACT(DATE FROM ${creation_time}) ;;
+  #}
+
+  dimension_group: creation {
+    type: time
+    timeframes: [
+      raw,
+      time,
+      second,
+      minute,
+      minute5,
+      minute15,
+      minute30,
+      hour,
+      date,
+      week,
+      month,
+      time_of_day,
+      day_of_week,
+      hour_of_day
+    ]
+    sql: ${TABLE}.creation_time ;;
   }
 
   dimension: start_time   {
