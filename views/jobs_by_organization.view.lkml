@@ -1,7 +1,24 @@
 view: jobs_by_organization {
     derived_table: {
-      sql: SELECT *
-              from `region-eu.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION`
+      sql: SELECT job_id,
+                  reservation_id,
+                  creation_time,
+                  start_time,
+                  end_time,
+                  error_result,
+                  total_bytes_processed,
+                  total_slot_ms,
+                  job_stages.shuffle_output_bytes as shuffle_output_bytes,
+                  job_stages.shuffle_output_bytes_spilled as shuffle_output_bytes_spilled
+              FROM `region-eu.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION` jbo, UNNEST(job_stages) as job_stages
+            WHERE
+          -- Includes jobs created 8 days ago but completed 7 days ago
+          jbo.creation_time
+            BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 8 DAY)
+            AND CURRENT_TIMESTAMP()
+          AND jbo.end_time
+            BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+            AND CURRENT_TIMESTAMP()
          ;;
   }
 
@@ -11,26 +28,10 @@ view: jobs_by_organization {
     sql: ${TABLE}.job_id ;;
   }
 
-  dimension: project_id {
-    type: string
-    sql: ${TABLE}.project_id ;;
-  }
-
   dimension: reservation_id   {
     type: string
     sql: ${TABLE}.reservation_id ;;
   }
-
-  #dimension: creation_time   {
-  #  type: string
-  #  sql: ${TABLE}.creation_time ;;
-  #}
-
-  #dimension: creation_date   {
-  #  type: date
-  #  datatype: date
-  #  sql: EXTRACT(DATE FROM ${creation_time}) ;;
-  #}
 
   dimension_group: creation {
     type: time
@@ -68,25 +69,10 @@ view: jobs_by_organization {
     sql: TIMESTAMP_DIFF(${end_time}, ${start_time}, SECOND) ;;
   }
 
-  dimension: job_type {
-    type: string
-    sql: ${TABLE}.job_type ;;
-  }
-
-  dimension: user_email {
-    type: string
-    sql: ${TABLE}.user_email ;;
-  }
-
-  dimension: state {
-    type: string
-    sql: ${TABLE}.state ;;
-  }
-
-  dimension: error_result {
-    type: string
-    sql: ${TABLE}.error_result ;;
-  }
+  #dimension: job_duration_milliseconds {
+  #  type: number
+  #  sql: TIMESTAMP_DIFF(${end_time}, ${start_time}, MILLISECOND) ;;
+  #}
 
   dimension: error_result_reason {
     type: string
@@ -100,74 +86,89 @@ view: jobs_by_organization {
 
   dimension: total_slot_ms {
     type: number
+    description: "Total slots used multiplied by total ms the job ran for"
     sql: ${TABLE}.total_slot_ms ;;
   }
 
-  dimension: avg_slots {
-    type: number
-    sql: SAFE_DIVIDE(${total_slot_ms}, (TIMESTAMP_DIFF(${end_time}, ${start_time}, MILLISECOND))) ;;
+ #dimension: query_total_slot {
+ #  label: "Total slots used for a query"
+ #  type: number
+ #  sql: ${total_slot_ms}/NULLIF(${job_duration_milliseconds},0) ;;
+ #}
+
+  measure: total_shuffle_output_terabytes {
+    type: sum
+    value_format_name: decimal_2
+    sql: ${TABLE}.shuffle_output_bytes/(1000*1000*1000*1000) ;;
   }
 
-  dimension: statement_type {
-    type: string
-    sql: (CASE WHEN ${TABLE}.statement_type IS NULL THEN 'N/A' ELSE ${TABLE}.statement_type END) ;;
+  measure: total_shuffle_output_terabytes_spilled {
+    type: sum
+    value_format_name: decimal_2
+    sql: ${TABLE}.shuffle_output_bytes_spilled/(1000*1000*1000*1000) ;;
+  }
+
+  measure: average_weekly_slot_usage   {
+    type: sum_distinct
+    sql_distinct_key: ${job_id} ;;
+    value_format_name: decimal_2
+    sql: SAFE_DIVIDE(${total_slot_ms}, (1000 * 60 * 60 * 24 * 7)) ;;
+  }
+
+  measure: weekly_reservation_utilization_based_on_latest_capacity {
+    type: number
+    value_format_name: percent_2
+    sql: SAFE_DIVIDE(${average_weekly_slot_usage}, ${reservation_capacity.latest_capacity}) ;;
   }
 
   measure: avg_job_duration_seconds {
-    type: average
+    type: average_distinct
+    sql_distinct_key: ${job_id} ;;
     value_format_name: decimal_2
     sql: ${job_duration_seconds} ;;
   }
 
   measure: median_job_duration_seconds {
-    type: median
+    type: median_distinct
+    sql_distinct_key: ${job_id} ;;
     value_format_name: decimal_2
     sql: ${job_duration_seconds} ;;
   }
 
   measure: count_errors {
-    type: sum
-    sql: (CASE WHEN ${error_result_reason} IS NOT NULL THEN 1 ELSE 0 END) ;;
+    type: sum_distinct
+    sql_distinct_key: ${job_id} ;;
+    sql: CASE WHEN ${error_result_reason} IS NOT NULL THEN 1 ELSE 0 END ;;
+  }
+
+}
+
+view: reservation_capacity {
+  derived_table: {
+    sql:
+      SELECT
+      CONCAT("bq-admin-spotify:EU.", rcp.reservation_name) AS reservation_id,
+      rcp.slot_capacity as latest_capacity
+      FROM
+      `bq-admin-spotify.region-eu.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT` AS rcp
+      WHERE
+      -- This subquery returns the latest slot capacity for each reservation
+      -- by extracting the reservation with the maximum timestamp
+      (rcp.reservation_name, rcp.change_timestamp) IN (
+      SELECT AS STRUCT reservation_name, MAX(change_timestamp)
+      FROM
+      `bq-admin-spotify.region-eu.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT`
+      GROUP BY reservation_name)
+    ;;
+  }
+
+  dimension: reservation_id   {
+    type: string
+    sql: ${TABLE}.reservation_id ;;
+  }
+
+  dimension: latest_capacity   {
+    type: number
+    sql: ${TABLE}.latest_capacity ;;
   }
 }
-
-view: jobs_by_organization_job_stages {
-
-    dimension: shuffle_output_terabytes {
-      type: number
-      value_format_name: decimal_2
-      sql: ${TABLE}.shuffle_output_bytes/(1000*1000*1000*1000) ;;
-    }
-
-    measure: total_shuffle_output_terabytes {
-      type: sum
-      value_format_name: decimal_2
-      sql: ${shuffle_output_terabytes} ;;
-    }
-
-    dimension: shuffle_output_terabytes_spilled {
-      type: number
-      value_format_name: decimal_2
-      sql: ${TABLE}.shuffle_output_bytes_spilled/(1000*1000*1000*1000) ;;
-    }
-
-    measure: total_shuffle_output_terabytes_spilled {
-      type: sum
-      value_format_name: decimal_2
-      sql: ${shuffle_output_terabytes_spilled} ;;
-    }
-}
-
-  #dimension: sum_shuffle_output_megabytes_spilled {
-  #  type: number
-  #  sql: (SELECT SUM(shuffle_output_bytes_spilled)/1000000 FROM UNNEST(${job_stages}));;
-  #  value_format_name: decimal_2
-  #  label: "Megabytes Spilled"
-  #}
-
-  #measure: total_shuffle_output_gibibytes_spilled {
-  #  type: sum
-  #  label: "Shuffle GB Spilled"
-  #  sql: ${shuffle_output_bytes_spilled} / (1024*1024*1024) ;;
-  #  value_format_name: decimal_2
-  #}
