@@ -117,8 +117,18 @@ view: jobs_by_organization {
 
   measure: weekly_reservation_utilization_based_on_latest_capacity {
     type: number
-    value_format_name: percent_2
-    sql: SAFE_DIVIDE(${average_weekly_slot_usage}, ${reservation_capacity.latest_capacity}) ;;
+    #value_format_name: percent_2
+    sql: ROUND(SAFE_DIVIDE(${average_weekly_slot_usage}, ${reservation_capacity.latest_capacity}) * 100, 2) ;;
+    html:
+    {% if value > 100 %}
+    <font color="red">{{ rendered_value }} %</font>
+    {% elsif value > 95 %}
+    <font color="orange">{{ rendered_value }} %</font>
+    {% elsif value > 80 %}
+    <font color="yellow">{{ rendered_value }} %</font>
+    {% else %}
+    <font color="green">{{ rendered_value }} %</font>
+    {% endif %} ;;
   }
 
   measure: avg_job_duration_seconds {
