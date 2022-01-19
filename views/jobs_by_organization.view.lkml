@@ -2,18 +2,18 @@ view: jobs_by_organization {
     derived_table: {
       sql: SELECT job_id,
                   reservation_id,
+                  project_id,
                   creation_time,
                   start_time,
                   end_time,
                   error_result,
                   total_bytes_processed,
                   total_slot_ms,
-                  job_stages.shuffle_output_bytes as shuffle_output_bytes,
-                  job_stages.shuffle_output_bytes_spilled as shuffle_output_bytes_spilled
-              FROM `region-eu.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION` jbo, UNNEST(job_stages) as job_stages
+                  job_stages
+              FROM `region-eu.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION` jbo
             WHERE
             -- filter by the partition column first to limit the amount of data scanned
-            -- allows for jobs created before the 7 day end_time filter
+            -- allows for jobs created yesterdat
             jbo.creation_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY) AND CURRENT_TIMESTAMP()
             AND jbo.end_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY) AND CURRENT_TIMESTAMP()
             -- AND job_type = "QUERY"
@@ -29,6 +29,11 @@ view: jobs_by_organization {
   dimension: reservation_id   {
     type: string
     sql: ${TABLE}.reservation_id ;;
+  }
+
+  dimension: project_id   {
+    type: string
+    sql: ${TABLE}.project_id ;;
   }
 
   dimension_group: creation {
@@ -67,9 +72,9 @@ view: jobs_by_organization {
     sql: TIMESTAMP_DIFF(${end_time}, ${start_time}, SECOND) ;;
   }
 
-  dimension: error_result_reason {
+  dimension: error_result {
     type: string
-    sql: ${TABLE}.error_result.reason ;;
+    sql: ${TABLE}.error_result ;;
   }
 
   dimension: total_bytes_processed {
@@ -89,21 +94,10 @@ view: jobs_by_organization {
  #  sql: ${total_slot_ms}/NULLIF(${job_duration_milliseconds},0) ;;
  #}
 
-  measure: total_shuffle_output_terabytes {
-    type: sum
-    value_format_name: decimal_2
-    sql: ${TABLE}.shuffle_output_bytes/(1000*1000*1000*1000) ;;
-  }
-
-  measure: total_shuffle_output_terabytes_spilled {
-    type: sum
-    value_format_name: decimal_2
-    sql: ${TABLE}.shuffle_output_bytes_spilled/(1000*1000*1000*1000) ;;
-  }
-
   measure: average_slot_usage_last_24h   {
-    type: sum_distinct
-    sql_distinct_key: ${job_id} ;;
+    #type: sum_distinct
+    #sql_distinct_key: ${job_id} ;;
+    type: sum
     value_format_name: decimal_2
     sql: SAFE_DIVIDE(${total_slot_ms}, (1000 * 60 * 60 * 24)) ;;
   }
@@ -114,19 +108,20 @@ view: jobs_by_organization {
     sql: ROUND(SAFE_DIVIDE(${average_slot_usage_last_24h}, ${reservation_capacity.latest_capacity}) * 100, 2) ;;
     html:
     {% if value > 100 %}
-    <font color="red">{{ rendered_value }} %</font>
+    <p style="color: black; background-color: lightcoral">{{ rendered_value }} %</p>
     {% elsif value > 95 %}
-    <font color="orange">{{ rendered_value }} %</font>
+    <p style="color: black; background-color: orange">{{ rendered_value }} %</p>
     {% elsif value > 80 %}
-    <font color="yellow">{{ rendered_value }} %</font>
+    <p style="color: black; background-color: gold">{{ rendered_value }} %</p>
     {% else %}
-    <font color="green">{{ rendered_value }} %</font>
+    <p style="color: black; background-color: palegreen">{{ rendered_value }} %</p>
     {% endif %} ;;
   }
 
   measure: avg_job_duration_seconds {
-    type: average_distinct
-    sql_distinct_key: ${job_id} ;;
+    #type: average_distinct
+    #sql_distinct_key: ${job_id} ;;
+    type: average
     value_format_name: decimal_2
     sql: ${job_duration_seconds} ;;
   }
@@ -134,29 +129,41 @@ view: jobs_by_organization {
   measure: avg_job_duration_seconds_vs_threshold {
     type: number
     sql: ROUND(SAFE_DIVIDE(${avg_job_duration_seconds}, ${thresholds.running_avg_job_duration_seconds}) *100, 2) ;;
+    #required_fields: [avg_job_duration_seconds, thresholds.running_avg_job_duration_seconds]
+    link: {
+      label: "Show slowest jobs"
+      url: "/looks/2?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
+    link: {
+      label: "60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}"
+      url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
     html:
     {% if value > 100 %}
-    <p style="color: black; background-color: lightcoral">{{ avg_job_duration_seconds._rendered_value }} - above 60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}</p>
+    <p style="color: black; background-color: lightcoral">{{ avg_job_duration_seconds._rendered_value }}</p>
     {% elsif value > 95 %}
-    <p style="color: black; background-color: orange">{{ avg_job_duration_seconds._rendered_value }} - 5% below 60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}</p>
+    <p style="color: black; background-color: orange">{{ avg_job_duration_seconds._rendered_value }}</p>
     {% elsif value > 80 %}
-    <p style="color: black; background-color: gold">{{ avg_job_duration_seconds._rendered_value }} - 20% below 60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}</p>
+    <p style="color: black; background-color: gold">{{ avg_job_duration_seconds._rendered_value }}</p>
     {% else %}
-    <p style="color: black; background-color: palegreen">{{ avg_job_duration_seconds._rendered_value }} - way below 60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}</p>
+    <p style="color: black; background-color: palegreen">{{ avg_job_duration_seconds._rendered_value }}</p>
     {% endif %} ;;
   }
 
   measure: median_job_duration_seconds {
-    type: median_distinct
-    sql_distinct_key: ${job_id} ;;
+    #type: median_distinct
+    #sql_distinct_key: ${job_id} ;;
+    type: median
     value_format_name: decimal_2
     sql: ${job_duration_seconds} ;;
   }
 
   measure: count_errors {
-    type: sum_distinct
-    sql_distinct_key: ${job_id} ;;
-    sql: CASE WHEN ${error_result_reason} IS NOT NULL THEN 1 ELSE 0 END ;;
+    #type: sum_distinct
+    #sql_distinct_key: ${job_id} ;;
+    #sql: CASE WHEN ${error_result} IS NOT NULL THEN 1 ELSE 0 END ;;
+    type: count
+    filters: [error_result: "-null"]
   }
 
 }
