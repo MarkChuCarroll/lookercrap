@@ -11,11 +11,11 @@ view: jobs_by_organization {
                   total_slot_ms,
                   job_stages
               FROM `region-eu.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION` jbo
-            WHERE
             -- filter by the partition column first to limit the amount of data scanned
-            -- allows for jobs created yesterdat
-            jbo.creation_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY) AND CURRENT_TIMESTAMP()
-            AND jbo.end_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY) AND CURRENT_TIMESTAMP()
+            -- allows for jobs created yesterday
+            -- WHERE
+            -- jbo.creation_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY) AND CURRENT_TIMESTAMP()
+            -- AND jbo.end_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY) AND CURRENT_TIMESTAMP()
             -- AND job_type = "QUERY"
          ;;
   }
@@ -105,6 +105,7 @@ view: jobs_by_organization {
   measure: reservation_utilization {
     type: number
     #value_format_name: percent_2
+    required_fields: [reservation_capacity.latest_capacity]
     sql: ROUND(SAFE_DIVIDE(${average_slot_usage_last_24h}, ${reservation_capacity.latest_capacity}) * 100, 2) ;;
     html:
     {% if value > 100 %}
@@ -133,6 +134,10 @@ view: jobs_by_organization {
     link: {
       label: "Show slowest jobs"
       url: "/looks/2?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
+    link: {
+      label: "Show 7d time series"
+      url: "/looks/4?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
     link: {
       label: "60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}"

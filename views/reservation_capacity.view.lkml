@@ -18,6 +18,7 @@ view: reservation_capacity {
   }
 
   dimension: reservation_id   {
+    primary_key: yes
     type: string
     sql: ${TABLE}.reservation_id ;;
   }

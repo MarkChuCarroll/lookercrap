@@ -3,6 +3,9 @@ connection: "information_schema"
 include: "/views/*.view.lkml"
 
 explore: jobs_by_organization {
+  always_filter: {
+    filters: [jobs_by_organization.creation_time: "24 hours"]
+  }
   join: job_stages {
     sql: LEFT JOIN UNNEST(job_stages) as job_stages ;;
     relationship: one_to_many
