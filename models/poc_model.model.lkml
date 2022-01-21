@@ -21,3 +21,5 @@ explore: jobs_by_organization {
     sql_on: ${jobs_by_organization.reservation_id} = ${thresholds.reservation_id} ;;
   }
 }
+
+explore: usage_timeline {}

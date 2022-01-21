@@ -100,6 +100,10 @@ view: jobs_by_organization {
     type: sum
     value_format_name: decimal_2
     sql: SAFE_DIVIDE(${total_slot_ms}, (1000 * 60 * 60 * 24)) ;;
+    link: {
+      label: "Show time series"
+      url: "/looks/5?&f[usage_timeline.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
   }
 
   measure: reservation_utilization {
