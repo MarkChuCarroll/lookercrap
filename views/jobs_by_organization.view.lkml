@@ -175,4 +175,10 @@ view: jobs_by_organization {
     filters: [error_result: "-null"]
   }
 
+  measure: test_75th_percentile {
+    type: percentile
+    percentile: 75
+    sql: ${job_duration_seconds} ;;
+  }
+
 }
