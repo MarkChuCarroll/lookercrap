@@ -20,7 +20,12 @@ explore: jobs_by_organization {
     relationship: many_to_one
     sql_on: ${jobs_by_organization.reservation_id} = ${thresholds.reservation_id} ;;
   }
+  join: thresholds_two {
+    type: left_outer
+    relationship: one_to_many
+    sql_on: ${jobs_by_organization.reservation_id} = ${thresholds_two.reservation_id} ;;
+  }
 }
 
 explore: usage_timeline {}
-explore: thresholds_two {}
+#explore: thresholds_two {}

@@ -175,10 +175,11 @@ view: jobs_by_organization {
     filters: [error_result: "-null"]
   }
 
-  measure: test_75th_percentile {
-    type: percentile
-    percentile: 75
-    sql: ${job_duration_seconds} ;;
+  measure: sum_errors {
+    #type: sum_distinct
+    #sql_distinct_key: ${job_id} ;;
+    type: sum
+    sql: CASE WHEN ${error_result} IS NOT NULL THEN 1 ELSE 0 END ;;
   }
 
 }
