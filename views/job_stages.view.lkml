@@ -1,5 +1,12 @@
 view: job_stages {
 
+  dimension: pk {
+    hidden: yes
+    primary_key: yes
+    type: string
+    sql: ${TABLE}.pk ;;
+  }
+
   dimension: shuffle_output_bytes {
     type: number
   }

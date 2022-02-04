@@ -101,7 +101,7 @@ view: jobs_by_organization {
     value_format_name: decimal_2
     sql: SAFE_DIVIDE(${total_slot_ms}, (1000 * 60 * 60 * 24)) ;;
     link: {
-      label: "Show time series"
+      label: "Show 24h time series"
       url: "/looks/5?&f[usage_timeline.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
   }
@@ -133,8 +133,8 @@ view: jobs_by_organization {
 
   measure: avg_job_duration_seconds_vs_threshold {
     type: number
-    sql: ROUND(SAFE_DIVIDE(${avg_job_duration_seconds}, ${thresholds.running_avg_job_duration_seconds}) *100, 2) ;;
-    #required_fields: [avg_job_duration_seconds, thresholds.running_avg_job_duration_seconds]
+    sql: ROUND(SAFE_DIVIDE(${avg_job_duration_seconds}, ${thresholds.p90_avg_job_duration}) *100, 2) ;;
+    #required_fields: [avg_job_duration_seconds, thresholds.p90_avg_job_duration]
     link: {
       label: "Show slowest jobs"
       url: "/looks/2?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
@@ -144,7 +144,7 @@ view: jobs_by_organization {
       url: "/looks/4?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
     link: {
-      label: "60d running avg of {{ thresholds.running_avg_job_duration_seconds._rendered_value }}"
+      label: "6 months P90 of {{ thresholds.p90_avg_job_duration._rendered_value }}"
       url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
     html:
@@ -167,19 +167,36 @@ view: jobs_by_organization {
     sql: ${job_duration_seconds} ;;
   }
 
-  measure: count_errors {
-    #type: sum_distinct
-    #sql_distinct_key: ${job_id} ;;
-    #sql: CASE WHEN ${error_result} IS NOT NULL THEN 1 ELSE 0 END ;;
-    type: count
-    filters: [error_result: "-null"]
-  }
-
   measure: sum_errors {
     #type: sum_distinct
     #sql_distinct_key: ${job_id} ;;
     type: sum
     sql: CASE WHEN ${error_result} IS NOT NULL THEN 1 ELSE 0 END ;;
+  }
+
+  measure: sum_errors_vs_threshold {
+    #type: sum_distinct
+    #sql_distinct_key: ${job_id} ;;
+    type: number
+    sql: ROUND(SAFE_DIVIDE(${sum_errors}, ${thresholds.p90_sum_errors}) *100, 2) ;;
+    link: {
+      label: "Show 30d time series"
+      url: "/looks/7?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
+    link: {
+      label: "6 months P90 of {{ thresholds.p90_sum_errors._rendered_value }}"
+      url: "/looks/6?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
+    html:
+    {% if value > 100 %}
+    <p style="color: black; background-color: lightcoral">{{ sum_errors._rendered_value }}</p>
+    {% elsif value > 95 %}
+    <p style="color: black; background-color: orange">{{ sum_errors._rendered_value }}</p>
+    {% elsif value > 80 %}
+    <p style="color: black; background-color: gold">{{ sum_errors._rendered_value }}</p>
+    {% else %}
+    <p style="color: black; background-color: palegreen">{{ sum_errors._rendered_value }}</p>
+    {% endif %} ;;
   }
 
 }
