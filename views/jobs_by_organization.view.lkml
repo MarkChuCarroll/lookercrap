@@ -354,8 +354,8 @@ view: jobs_by_organization {
     type: number
     sql: CASE WHEN (${daily_slot_usage}>${thresholds.threshold_slot_usage} AND ${thresholds.slo_breach_slot_usage} = 1) THEN 2 WHEN ${daily_slot_usage}>${thresholds.threshold_slot_usage} THEN 1 ELSE 0 END ;;
     link: {
-      label: "(beta) Show by projects"
-      url: "/looks/15?&f[usage_timeline.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+      label: "-- Show by projects"
+      url: "/looks/16?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
     link: {
       label: "-- Show 24h time series"
