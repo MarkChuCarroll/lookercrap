@@ -3,6 +3,7 @@ view: thresholds {
     interval_trigger: "24 hours"
     sql: SELECT
           reservation_id,
+          threshold_count_jobs,
           threshold_sum_stopped,
           threshold_sum_timeout,
           threshold_sum_resources_exceeded,
@@ -11,7 +12,8 @@ view: thresholds {
           threshold_median_duration,
           threshold_slot_usage,
           threshold_shuffle_terabytes_spilled,
-          CASE WHEN SUM(CASE WHEN daily_sum_stopped>threshold_sum_stopped THEN 1 ELSE 0 END) = 7 THEN 1 ELSE 0 END AS slo_breach_sum_stopped, -- Check metric against threshold and count if all 7 days are in breach
+          CASE WHEN SUM(CASE WHEN daily_count_jobs>threshold_count_jobs THEN 1 ELSE 0 END) = 7 THEN 1 ELSE 0 END AS slo_breach_count_jobs, -- Check metric against threshold and count if all 7 days are in breach
+          CASE WHEN SUM(CASE WHEN daily_sum_stopped>threshold_sum_stopped THEN 1 ELSE 0 END) = 7 THEN 1 ELSE 0 END AS slo_breach_sum_stopped,
           CASE WHEN SUM(CASE WHEN daily_sum_timeout>threshold_sum_timeout THEN 1 ELSE 0 END) = 7 THEN 1 ELSE 0 END AS slo_breach_sum_timeout,
           CASE WHEN SUM(CASE WHEN daily_sum_resources_exceeded>threshold_sum_resources_exceeded THEN 1 ELSE 0 END) = 7 THEN 1 ELSE 0 END AS slo_breach_sum_resources_exceeded,
           CASE WHEN SUM(CASE WHEN daily_sum_other_errors>threshold_sum_other_errors THEN 1 ELSE 0 END) = 7 THEN 1 ELSE 0 END AS slo_breach_sum_other_errors,
@@ -24,6 +26,7 @@ view: thresholds {
             SELECT
             reservation_id,
             day,
+            daily_count_jobs,
             daily_sum_stopped,
             daily_sum_timeout,
             daily_sum_resources_exceeded,
@@ -32,7 +35,8 @@ view: thresholds {
             daily_median_duration,
             daily_slot_usage,
             daily_shuffle_terabytes_spilled,
-            ROUND(PERCENTILE_CONT(daily_sum_stopped, 0.9) OVER (PARTITION BY reservation_id)) AS threshold_sum_stopped, -- Calculate 6 months P90 of the different metrics
+            ROUND(PERCENTILE_CONT(daily_count_jobs, 0.9) OVER (PARTITION BY reservation_id)) AS threshold_count_jobs, -- Calculate 6 months P90 of the different metrics
+            ROUND(PERCENTILE_CONT(daily_sum_stopped, 0.9) OVER (PARTITION BY reservation_id)) AS threshold_sum_stopped,
             ROUND(PERCENTILE_CONT(daily_sum_timeout, 0.9) OVER (PARTITION BY reservation_id)) AS threshold_sum_timeout,
             ROUND(PERCENTILE_CONT(daily_sum_resources_exceeded, 0.9) OVER (PARTITION BY reservation_id)) AS threshold_sum_resources_exceeded,
             ROUND(PERCENTILE_CONT(daily_sum_other_errors, 0.9) OVER (PARTITION BY reservation_id)) AS threshold_sum_other_errors,
@@ -45,7 +49,8 @@ view: thresholds {
             SELECT
             reservation_id,
             EXTRACT(DATE from jbo.creation_time) AS day,
-            SUM(CASE WHEN error_result.reason = 'stopped' THEN 1 ELSE 0 END) AS daily_sum_stopped, -- Calculate daily aggregates of all metrics
+            COUNT(job_id) AS daily_count_jobs, -- Calculate daily aggregates of all metrics
+            SUM(CASE WHEN error_result.reason = 'stopped' THEN 1 ELSE 0 END) AS daily_sum_stopped,
             SUM(CASE WHEN error_result.reason = 'timeout' THEN 1 ELSE 0 END) AS daily_sum_timeout,
             SUM(CASE WHEN error_result.reason = 'resourcesExceeded' THEN 1 ELSE 0 END) AS daily_sum_resources_exceeded,
             SUM(CASE WHEN error_result.reason NOT IN ('stopped', 'timeout', 'resourcesExceeded') THEN 1 ELSE 0 END) AS daily_sum_other_errors,
@@ -59,7 +64,7 @@ view: thresholds {
           )
           )
           WHERE day BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) -- 7 days in the past from yesterday
-          GROUP BY reservation_id, threshold_sum_stopped, threshold_sum_timeout, threshold_sum_resources_exceeded, threshold_sum_other_errors,
+          GROUP BY reservation_id, threshold_count_jobs, threshold_sum_stopped, threshold_sum_timeout, threshold_sum_resources_exceeded, threshold_sum_other_errors,
           threshold_avg_duration, threshold_median_duration, threshold_slot_usage, threshold_shuffle_terabytes_spilled
           ;;
   }
@@ -71,6 +76,16 @@ view: thresholds {
   }
 
   # Use of SUM type to avoid Looker group by errors
+  measure: threshold_count_jobs   {
+    type: sum
+    sql: ${TABLE}.threshold_count_jobs ;;
+  }
+
+  measure: slo_breach_count_jobs  {
+    type: sum
+    sql: ${TABLE}.slo_breach_count_jobs ;;
+  }
+
   measure: threshold_sum_stopped   {
     type: sum
     sql: ${TABLE}.threshold_sum_stopped ;;

@@ -94,6 +94,10 @@ view: jobs_by_organization {
     value_format_name: decimal_2
   }
 
+  measure: count_jobs {
+    type:  count
+  }
+
   measure: sum_stopped {
     type: sum
     sql: CASE WHEN ${error_result_reason} = 'stopped' THEN 1 ELSE 0 END ;;
@@ -137,6 +141,35 @@ view: jobs_by_organization {
     type: sum
     sql: ${shuffle_terabytes_spilled} ;;
     value_format_name: decimal_2
+  }
+
+  measure: count_jobs_vs_threshold {
+    type:  number
+    sql: CASE WHEN (${count_jobs}>${thresholds.threshold_count_jobs} AND ${thresholds.slo_breach_count_jobs} = 1) THEN 2 WHEN ${count_jobs}>${thresholds.threshold_count_jobs} THEN 1 ELSE 0 END ;;
+    link: {
+      label: "Show 14d time series"
+      url: "/looks/14?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+14+days"
+    }
+    link: {
+      label: "Show 30d time series"
+      url: "/looks/14?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
+    }
+    link: {
+      label: "Show 60d time series"
+      url: "/looks/14?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
+    }
+    link: {
+      label: "6 months P90 of {{ thresholds.threshold_count_jobs._rendered_value }}"
+      url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
+    }
+    html:
+    {% if value == 2 %}
+    <p style="color: black; background-color: lightcoral">{{ count_jobs._rendered_value }}</p>
+    {% elsif value == 1 %}
+    <p style="color: black; background-color: orange">{{ count_jobs._rendered_value }}</p>
+    {% else %}
+    <p style="color: black; background-color: palegreen">{{ count_jobs._rendered_value }}</p>
+    {% endif %} ;;
   }
 
   measure: sum_stopped_vs_threshold {
