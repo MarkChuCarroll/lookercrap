@@ -159,6 +159,10 @@ view: jobs_by_organization {
       url: "/looks/14?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
     }
     link: {
+      label: "Show by projects"
+      url: "/looks/17?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
+    }
+    link: {
       label: "6 months P90 of {{ thresholds.threshold_count_jobs._rendered_value }}"
       url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
@@ -308,6 +312,10 @@ view: jobs_by_organization {
       url: "/looks/4?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
     }
     link: {
+      label: "Show by projects"
+      url: "/looks/18?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
+    }
+    link: {
       label: "6 months P90 of {{ thresholds.threshold_avg_duration._rendered_value }}"
       url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
@@ -337,6 +345,10 @@ view: jobs_by_organization {
       url: "/looks/11?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
     }
     link: {
+      label: "Show by projects"
+      url: "/looks/19?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
+    }
+    link: {
       label: "6 months P90 of {{ thresholds.threshold_median_duration._rendered_value }}"
       url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
@@ -354,10 +366,6 @@ view: jobs_by_organization {
     type: number
     sql: CASE WHEN (${daily_slot_usage}>${thresholds.threshold_slot_usage} AND ${thresholds.slo_breach_slot_usage} = 1) THEN 2 WHEN ${daily_slot_usage}>${thresholds.threshold_slot_usage} THEN 1 ELSE 0 END ;;
     link: {
-      label: "-- Show by projects"
-      url: "/looks/16?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
-    }
-    link: {
       label: "-- Show 24h time series"
       url: "/looks/5?&f[usage_timeline.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
@@ -372,6 +380,10 @@ view: jobs_by_organization {
     link: {
       label: "Show 60d time series"
       url: "/looks/9?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
+    }
+    link: {
+      label: "Show by projects"
+      url: "/looks/16?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
     }
     link: {
       label: "6 months P90 of {{ thresholds.threshold_slot_usage._rendered_value }}"
