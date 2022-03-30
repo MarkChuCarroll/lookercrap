@@ -192,6 +192,10 @@ view: jobs_by_organization {
       url: "/looks/13?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
     }
     link: {
+      label: "Show by projects"
+      url: "/looks/21?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
+    }
+    link: {
       label: "6 months P90 of {{ thresholds.threshold_sum_stopped._rendered_value }}"
       url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
@@ -219,6 +223,10 @@ view: jobs_by_organization {
     link: {
       label: "Show 60d time series"
       url: "/looks/12?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
+    }
+    link: {
+      label: "Show by projects"
+      url: "/looks/22?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
     }
     link: {
       label: "6 months P90 of {{ thresholds.threshold_sum_timeout._rendered_value }}"
@@ -250,6 +258,10 @@ view: jobs_by_organization {
       url: "/looks/8?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
     }
     link: {
+      label: "Show by projects"
+      url: "/looks/23?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
+    }
+    link: {
       label: "6 months P90 of {{ thresholds.threshold_sum_resources_exceeded._rendered_value }}"
       url: "/looks/3?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
     }
@@ -277,6 +289,10 @@ view: jobs_by_organization {
     link: {
       label: "Show 60d time series"
       url: "/looks/7?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
+    }
+    link: {
+      label: "Show by projects"
+      url: "/looks/24?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
     }
     link: {
       label: "6 months P90 of {{ thresholds.threshold_sum_other_errors._rendered_value }}"
@@ -413,6 +429,10 @@ view: jobs_by_organization {
     link: {
       label: "Show 60d time series"
       url: "/looks/10?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+60+days"
+    }
+    link: {
+      label: "Show by projects"
+      url: "/looks/20?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+30+days"
     }
     link: {
       label: "6 months P90 of {{ thresholds.threshold_shuffle_terabytes_spilled._rendered_value }}"
