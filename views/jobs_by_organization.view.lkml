@@ -113,7 +113,7 @@ view: jobs_by_organization {
     sql: CASE WHEN ${error_result_reason} = 'resourcesExceeded' THEN 1 ELSE 0 END ;;
   }
 
-  measure: sum_other_errors {
+  measure: count_errors {
     type: sum
     sql: CASE WHEN ${error_result_reason} NOT IN ('stopped', 'timeout', 'resourcesExceeded') THEN 1 ELSE 0 END ;;
   }
@@ -142,7 +142,7 @@ view: jobs_by_organization {
     #type: sum_distinct
     #sql_distinct_key: ${job_id} ;;
     type: number
-    sql: SAFE_DIVIDE(${sum_other_errors}*100, ${thresholds.threshold_sum_other_errors}) ;;
+    sql: SAFE_DIVIDE(${count_errors}*100, ${thresholds.threshold_sum_other_errors}) ;;
   }
   measure: sum_shuffle_terabytes_spilled {
     type: sum
