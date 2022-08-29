@@ -142,7 +142,8 @@ view: jobs_by_organization {
     #type: sum_distinct
     #sql_distinct_key: ${job_id} ;;
     type: number
-    sql: SAFE_DIVIDE(${count_errors}*100, ${thresholds.threshold_sum_other_errors}) ;;
+    sql: ${count_errors}
+    # SAFE_DIVIDE(${count_errors}*100, ${thresholds.threshold_sum_other_errors}) ;;
   }
   measure: sum_shuffle_terabytes_spilled {
     type: sum
