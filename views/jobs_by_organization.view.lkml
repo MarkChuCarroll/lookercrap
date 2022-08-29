@@ -178,7 +178,7 @@ view: jobs_by_organization {
     #type: sum_distinct
     #sql_distinct_key: ${job_id} ;;
     type: number
-    sql: ROUND(SAFE_DIVIDE(${sum_errors}, ${thresholds.p90_sum_errors}) *100, 2) ;;
+    sql: SAFE_DIVIDE(${sum_errors}, ${thresholds.p90_sum_errors}) *100 ;;
     link: {
       label: "Show 30d time series"
       url: "/looks/7?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}"
