@@ -3,6 +3,7 @@ view: reservation_capacity {
     sql:
       SELECT
       CONCAT("bq-admin-spotify:EU.", rcp.reservation_name) AS reservation_id,
+      ignore_idle_slots AS ignore_idle_slots,
       rcp.slot_capacity as latest_capacity
       FROM
       `bq-admin-spotify.region-eu.INFORMATION_SCHEMA.RESERVATION_CHANGES_BY_PROJECT` AS rcp
@@ -21,6 +22,11 @@ view: reservation_capacity {
     primary_key: yes
     type: string
     sql: ${TABLE}.reservation_id ;;
+  }
+
+  dimension: ignore_idle_slots   {
+    type: yesno
+    sql: ${TABLE}.ignore_idle_slots ;;
   }
 
   dimension: latest_capacity   {
