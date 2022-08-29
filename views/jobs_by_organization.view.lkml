@@ -285,7 +285,7 @@ view: jobs_by_organization {
 
   measure: sum_other_errors_vs_threshold {
     type: number
-    sql: CASE WHEN (${sum_other_errors}>${thresholds.threshold_sum_other_errors} AND ${thresholds.slo_breach_sum_other_errors} = 1) THEN 2 WHEN ${sum_other_errors}>${thresholds.threshold_sum_other_errors} THEN 1 ELSE 0 END ;;
+    sql: CASE WHEN (${count_errors}>${thresholds.threshold_sum_other_errors} AND ${thresholds.slo_breach_sum_other_errors} = 1) THEN 2 WHEN ${count_errors}>${thresholds.threshold_sum_other_errors} THEN 1 ELSE 0 END ;;
     link: {
       label: "Show 14d time series"
       url: "/looks/7?&f[jobs_by_organization.reservation_id]={{ jobs_by_organization.reservation_id._value | url_encode }}&f[jobs_by_organization.creation_time]=last+14+days"
@@ -308,11 +308,11 @@ view: jobs_by_organization {
     }
     html:
     {% if value == 2 %}
-    <p style="color: black; background-color: lightcoral">{{ sum_other_errors._rendered_value }}</p>
+    <p style="color: black; background-color: lightcoral">{{ count_errors._rendered_value }}</p>
     {% elsif value == 1 %}
-    <p style="color: black; background-color: orange">{{ sum_other_errors._rendered_value }}</p>
+    <p style="color: black; background-color: orange">{{ count_errors._rendered_value }}</p>
     {% else %}
-    <p style="color: black; background-color: palegreen">{{ sum_other_errors._rendered_value }}</p>
+    <p style="color: black; background-color: palegreen">{{ count_errors._rendered_value }}</p>
     {% endif %} ;;
   }
 
